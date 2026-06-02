@@ -1,5 +1,6 @@
 package io.github.rbomblauskas.kraitis.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
@@ -42,16 +45,21 @@ import io.github.rbomblauskas.kraitis.ui.theme.KraitisTheme
 fun WardrobeApp(viewModel: WardrobeViewModel) {
     val items by viewModel.items.collectAsState()
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
+    var selectedItemId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     WardrobeContent(
         items = items,
+        selectedItemId = selectedItemId,
         showAddDialog = showAddDialog,
+        onItemClick = { selectedItemId = it },
+        onBackToList = { selectedItemId = null },
         onAddClick = { showAddDialog = true },
         onDismissAdd = { showAddDialog = false },
         onSaveItem = { name, category, condition, price ->
             viewModel.addItem(name, category, condition, price)
             showAddDialog = false
-        }
+        },
+        onStatusChange = viewModel::updateStatus
     )
 }
 
@@ -59,28 +67,59 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
 @Composable
 private fun WardrobeContent(
     items: List<ClothingItem>,
+    selectedItemId: Long?,
     showAddDialog: Boolean,
+    onItemClick: (Long) -> Unit,
+    onBackToList: () -> Unit,
     onAddClick: () -> Unit,
     onDismissAdd: () -> Unit,
-    onSaveItem: (String, String, String, String) -> Unit
+    onSaveItem: (String, String, String, String) -> Unit,
+    onStatusChange: (Long, ClothingStatus) -> Unit
 ) {
+    val selectedItem = items.firstOrNull { it.id == selectedItemId }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text("Kraitis") })
+            if (selectedItemId == null) {
+                TopAppBar(title = { Text("Kraitis") })
+            } else {
+                TopAppBar(
+                    title = { Text("Item detail") },
+                    navigationIcon = {
+                        TextButton(onClick = onBackToList) {
+                            Text("Back")
+                        }
+                    }
+                )
+            }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddClick) {
-                Text("+")
+            if (selectedItemId == null) {
+                FloatingActionButton(onClick = onAddClick) {
+                    Text("+")
+                }
             }
         }
     ) { innerPadding ->
-        WardrobeList(
-            items = items,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        )
+        if (selectedItemId == null) {
+            WardrobeList(
+                items = items,
+                onItemClick = onItemClick,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            )
+        } else {
+            ItemDetail(
+                item = selectedItem,
+                onBack = onBackToList,
+                onStatusChange = onStatusChange,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            )
+        }
     }
 
     if (showAddDialog) {
@@ -94,6 +133,7 @@ private fun WardrobeContent(
 @Composable
 private fun WardrobeList(
     items: List<ClothingItem>,
+    onItemClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (items.isEmpty()) {
@@ -105,7 +145,10 @@ private fun WardrobeList(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(items, key = { it.id }) { item ->
-                ClothingRow(item = item)
+                ClothingRow(
+                    item = item,
+                    onClick = { onItemClick(item.id) }
+                )
             }
         }
     }
@@ -131,8 +174,15 @@ private fun EmptyWardrobe(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ClothingRow(item: ClothingItem) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun ClothingRow(
+    item: ClothingItem,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -156,6 +206,93 @@ private fun ClothingRow(item: ClothingItem) {
                 Text("Price: ${formatPrice(priceCents)}")
             }
         }
+    }
+}
+
+@Composable
+private fun ItemDetail(
+    item: ClothingItem?,
+    onBack: () -> Unit,
+    onStatusChange: (Long, ClothingStatus) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (item == null) {
+        Box(modifier = modifier) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("Item was not found")
+                Button(onClick = onBack) {
+                    Text("Back to wardrobe")
+                }
+            }
+        }
+        return
+    }
+
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = item.name,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Text("Category: ${item.category}")
+                Text("Condition: ${item.condition}")
+                Text("Price: ${item.priceCents?.let { formatPrice(it) } ?: "not set"}")
+                Text("Status: ${item.status.label}")
+            }
+        }
+
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Change status",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                ClothingStatus.entries.forEach { status ->
+                    StatusRow(
+                        status = status,
+                        isSelected = item.status == status,
+                        onClick = { onStatusChange(item.id, status) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusRow(
+    status: ClothingStatus,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isSelected, onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        )
+    ) {
+        Text(
+            text = if (isSelected) "${status.label} current" else status.label,
+            modifier = Modifier.padding(14.dp),
+            style = MaterialTheme.typography.bodyLarge
+        )
     }
 }
 
@@ -239,10 +376,14 @@ private fun WardrobeContentPreview() {
                     status = ClothingStatus.ACTIVE
                 )
             ),
+            selectedItemId = null,
             showAddDialog = false,
+            onItemClick = {},
+            onBackToList = {},
             onAddClick = {},
             onDismissAdd = {},
-            onSaveItem = { _, _, _, _ -> }
+            onSaveItem = { _, _, _, _ -> },
+            onStatusChange = { _, _ -> }
         )
     }
 }
