@@ -11,5 +11,6 @@ data class ClothingItem(
     val category: ClothingCategory,
     val condition: ClothingCondition,
     val priceCents: Long? = null,
-    val status: ClothingStatus = ClothingStatus.ACTIVE
+    val status: ClothingStatus = ClothingStatus.ACTIVE,
+    val photoPath: String? = null
 )
