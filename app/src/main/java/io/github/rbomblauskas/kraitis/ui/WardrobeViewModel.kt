@@ -3,6 +3,8 @@ package io.github.rbomblauskas.kraitis.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import io.github.rbomblauskas.kraitis.data.ClothingCategory
+import io.github.rbomblauskas.kraitis.data.ClothingCondition
 import io.github.rbomblauskas.kraitis.data.ClothingDao
 import io.github.rbomblauskas.kraitis.data.ClothingItem
 import io.github.rbomblauskas.kraitis.data.ClothingStatus
@@ -24,15 +26,12 @@ class WardrobeViewModel(
 
     fun addItem(
         name: String,
-        category: String,
-        condition: String,
+        category: ClothingCategory,
+        condition: ClothingCondition,
         priceText: String
     ) {
         val trimmedName = name.trim()
-        val trimmedCategory = category.trim()
-        val trimmedCondition = condition.trim()
-
-        if (trimmedName.isBlank() || trimmedCategory.isBlank() || trimmedCondition.isBlank()) {
+        if (trimmedName.isBlank()) {
             return
         }
 
@@ -40,8 +39,8 @@ class WardrobeViewModel(
             clothingDao.insert(
                 ClothingItem(
                     name = trimmedName,
-                    category = trimmedCategory,
-                    condition = trimmedCondition,
+                    category = category,
+                    condition = condition,
                     priceCents = parsePriceCents(priceText)
                 )
             )

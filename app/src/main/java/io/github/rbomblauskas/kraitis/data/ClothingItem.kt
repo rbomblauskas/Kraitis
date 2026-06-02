@@ -8,8 +8,8 @@ data class ClothingItem(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val category: String,
-    val condition: String,
+    val category: ClothingCategory,
+    val condition: ClothingCondition,
     val priceCents: Long? = null,
     val status: ClothingStatus = ClothingStatus.ACTIVE
 )
