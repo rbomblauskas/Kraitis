@@ -1,5 +1,6 @@
 package io.github.rbomblauskas.kraitis.ui
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -8,6 +9,7 @@ import io.github.rbomblauskas.kraitis.data.ClothingCondition
 import io.github.rbomblauskas.kraitis.data.ClothingDao
 import io.github.rbomblauskas.kraitis.data.ClothingItem
 import io.github.rbomblauskas.kraitis.data.ClothingStatus
+import io.github.rbomblauskas.kraitis.data.PhotoStore
 import java.math.RoundingMode
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +17,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class WardrobeViewModel(
-    private val clothingDao: ClothingDao
+    private val clothingDao: ClothingDao,
+    private val photoStore: PhotoStore
 ) : ViewModel() {
     val items: StateFlow<List<ClothingItem>> = clothingDao.getAllItems()
         .stateIn(
@@ -53,6 +56,15 @@ class WardrobeViewModel(
         }
     }
 
+    fun setPhotoFromGallery(itemId: Long, uri: Uri) {
+        viewModelScope.launch {
+            val oldPath = items.value.firstOrNull { it.id == itemId }?.photoPath
+            val newPath = photoStore.copyFromUri(uri) ?: return@launch
+            clothingDao.updatePhoto(itemId, newPath)
+            photoStore.delete(oldPath)
+        }
+    }
+
     private fun parsePriceCents(priceText: String): Long? {
         val normalizedPrice = priceText.trim().replace(',', '.')
         if (normalizedPrice.isBlank()) return null
@@ -66,12 +78,13 @@ class WardrobeViewModel(
 }
 
 class WardrobeViewModelFactory(
-    private val clothingDao: ClothingDao
+    private val clothingDao: ClothingDao,
+    private val photoStore: PhotoStore
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(WardrobeViewModel::class.java)) {
-            return WardrobeViewModel(clothingDao) as T
+            return WardrobeViewModel(clothingDao, photoStore) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.rbomblauskas.kraitis.data.KraitisDatabase
+import io.github.rbomblauskas.kraitis.data.PhotoStore
 import io.github.rbomblauskas.kraitis.ui.WardrobeApp
 import io.github.rbomblauskas.kraitis.ui.WardrobeViewModel
 import io.github.rbomblauskas.kraitis.ui.WardrobeViewModelFactory
@@ -17,7 +18,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val clothingDao = KraitisDatabase.getDatabase(applicationContext).clothingDao()
-        val viewModelFactory = WardrobeViewModelFactory(clothingDao)
+        val photoStore = PhotoStore(applicationContext)
+        val viewModelFactory = WardrobeViewModelFactory(clothingDao, photoStore)
 
         setContent {
             KraitisTheme {

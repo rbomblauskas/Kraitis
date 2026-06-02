@@ -22,4 +22,7 @@ interface ClothingDao {
 
     @Query("UPDATE clothing_items SET status = :status WHERE id = :id")
     suspend fun updateStatus(id: Long, status: ClothingStatus)
+
+    @Query("UPDATE clothing_items SET photoPath = :photoPath WHERE id = :id")
+    suspend fun updatePhoto(id: Long, photoPath: String?)
 }

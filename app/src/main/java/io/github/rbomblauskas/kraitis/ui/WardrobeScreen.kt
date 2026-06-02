@@ -1,5 +1,9 @@
 package io.github.rbomblauskas.kraitis.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,9 +13,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -24,6 +30,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,15 +44,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import io.github.rbomblauskas.kraitis.data.ClothingCategory
 import io.github.rbomblauskas.kraitis.data.ClothingCondition
 import io.github.rbomblauskas.kraitis.data.ClothingItem
 import io.github.rbomblauskas.kraitis.data.ClothingStatus
 import io.github.rbomblauskas.kraitis.ui.theme.KraitisTheme
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +77,8 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
             viewModel.addItem(name, category, condition, price)
             showAddDialog = false
         },
-        onStatusChange = viewModel::updateStatus
+        onStatusChange = viewModel::updateStatus,
+        onGalleryPhoto = viewModel::setPhotoFromGallery
     )
 }
 
@@ -81,7 +93,8 @@ private fun WardrobeContent(
     onAddClick: () -> Unit,
     onDismissAdd: () -> Unit,
     onSaveItem: (String, ClothingCategory, ClothingCondition, String) -> Unit,
-    onStatusChange: (Long, ClothingStatus) -> Unit
+    onStatusChange: (Long, ClothingStatus) -> Unit,
+    onGalleryPhoto: (Long, Uri) -> Unit
 ) {
     val selectedItem = items.firstOrNull { it.id == selectedItemId }
 
@@ -122,6 +135,7 @@ private fun WardrobeContent(
                 item = selectedItem,
                 onBack = onBackToList,
                 onStatusChange = onStatusChange,
+                onGalleryPhoto = onGalleryPhoto,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -221,6 +235,7 @@ private fun ItemDetail(
     item: ClothingItem?,
     onBack: () -> Unit,
     onStatusChange: (Long, ClothingStatus) -> Unit,
+    onGalleryPhoto: (Long, Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (item == null) {
@@ -241,6 +256,14 @@ private fun ItemDetail(
         return
     }
 
+    val pickPhoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            onGalleryPhoto(item.id, uri)
+        }
+    }
+
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
@@ -257,6 +280,31 @@ private fun ItemDetail(
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
+            }
+        }
+
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                item.photoPath?.let { path ->
+                    AsyncImage(
+                        model = File(path),
+                        contentDescription = item.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    )
+                }
+                OutlinedButton(
+                    onClick = {
+                        pickPhoto.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                ) {
+                    Text(if (item.photoPath == null) "Add photo" else "Change photo")
+                }
             }
         }
 
@@ -437,7 +485,8 @@ private fun WardrobeContentPreview() {
             onAddClick = {},
             onDismissAdd = {},
             onSaveItem = { _, _, _, _ -> },
-            onStatusChange = { _, _ -> }
+            onStatusChange = { _, _ -> },
+            onGalleryPhoto = { _, _ -> }
         )
     }
 }
