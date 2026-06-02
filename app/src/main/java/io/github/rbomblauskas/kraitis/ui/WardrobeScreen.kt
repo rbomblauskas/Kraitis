@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,11 +16,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
@@ -243,33 +244,49 @@ private fun ItemDetail(
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.headlineSmall
                 )
-                Text("Category: ${item.category.label}")
-                Text("Condition: ${item.condition.label}")
-                Text("Price: ${item.priceCents?.let { formatPrice(it) } ?: "not set"}")
-                Text("Status: ${item.status.label}")
+                Text(
+                    text = item.status.label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
 
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    DetailRow("Category", item.category.label)
+                    DetailRow("Condition", item.condition.label)
+                    DetailRow("Price", item.priceCents?.let { formatPrice(it) } ?: "-")
+                }
+            }
+        }
+
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = "Change status",
                     style = MaterialTheme.typography.titleMedium
                 )
-                ClothingStatus.entries.forEach { status ->
-                    StatusRow(
-                        status = status,
-                        isSelected = item.status == status,
-                        onClick = { onStatusChange(item.id, status) }
-                    )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ClothingStatus.entries.forEach { status ->
+                        FilterChip(
+                            selected = item.status == status,
+                            onClick = { onStatusChange(item.id, status) },
+                            label = { Text(status.label) }
+                        )
+                    }
                 }
             }
         }
@@ -277,28 +294,16 @@ private fun ItemDetail(
 }
 
 @Composable
-private fun StatusRow(
-    status: ClothingStatus,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = !isSelected, onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
-        )
+private fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = if (isSelected) "${status.label} current" else status.label,
-            modifier = Modifier.padding(14.dp),
-            style = MaterialTheme.typography.bodyLarge
+            text = label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Text(value)
     }
 }
 
