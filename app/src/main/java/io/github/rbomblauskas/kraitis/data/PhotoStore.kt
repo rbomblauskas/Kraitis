@@ -2,6 +2,7 @@ package io.github.rbomblauskas.kraitis.data
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.content.FileProvider
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -12,6 +13,10 @@ class PhotoStore(private val context: Context) {
         get() = File(context.filesDir, "photos").apply { mkdirs() }
 
     fun newPhotoFile(): File = File(photosDir, "photo_${System.currentTimeMillis()}.jpg")
+
+    // camera app needs a content uri it can write into
+    fun contentUri(file: File): Uri =
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
     // gallery uri access is temporary, so copy the image into our own file
     suspend fun copyFromUri(uri: Uri): String? = withContext(Dispatchers.IO) {

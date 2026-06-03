@@ -40,10 +40,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,6 +57,7 @@ import io.github.rbomblauskas.kraitis.data.ClothingCategory
 import io.github.rbomblauskas.kraitis.data.ClothingCondition
 import io.github.rbomblauskas.kraitis.data.ClothingItem
 import io.github.rbomblauskas.kraitis.data.ClothingStatus
+import io.github.rbomblauskas.kraitis.data.PhotoStore
 import io.github.rbomblauskas.kraitis.ui.theme.KraitisTheme
 import java.io.File
 
@@ -78,7 +81,8 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
             showAddDialog = false
         },
         onStatusChange = viewModel::updateStatus,
-        onGalleryPhoto = viewModel::setPhotoFromGallery
+        onGalleryPhoto = viewModel::setPhotoFromGallery,
+        onCameraPhoto = viewModel::setPhotoFromCamera
     )
 }
 
@@ -94,7 +98,8 @@ private fun WardrobeContent(
     onDismissAdd: () -> Unit,
     onSaveItem: (String, ClothingCategory, ClothingCondition, String) -> Unit,
     onStatusChange: (Long, ClothingStatus) -> Unit,
-    onGalleryPhoto: (Long, Uri) -> Unit
+    onGalleryPhoto: (Long, Uri) -> Unit,
+    onCameraPhoto: (Long, String) -> Unit
 ) {
     val selectedItem = items.firstOrNull { it.id == selectedItemId }
 
@@ -136,6 +141,7 @@ private fun WardrobeContent(
                 onBack = onBackToList,
                 onStatusChange = onStatusChange,
                 onGalleryPhoto = onGalleryPhoto,
+                onCameraPhoto = onCameraPhoto,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -236,6 +242,7 @@ private fun ItemDetail(
     onBack: () -> Unit,
     onStatusChange: (Long, ClothingStatus) -> Unit,
     onGalleryPhoto: (Long, Uri) -> Unit,
+    onCameraPhoto: (Long, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (item == null) {
@@ -262,6 +269,24 @@ private fun ItemDetail(
         if (uri != null) {
             onGalleryPhoto(item.id, uri)
         }
+    }
+
+    val context = LocalContext.current
+    val photoStore = remember { PhotoStore(context.applicationContext) }
+    // path is remembered here because the camera result only says true/false
+    var cameraPhotoPath by rememberSaveable { mutableStateOf<String?>(null) }
+    val takePhoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { saved ->
+        val path = cameraPhotoPath
+        if (path != null) {
+            if (saved) {
+                onCameraPhoto(item.id, path)
+            } else {
+                File(path).delete()
+            }
+        }
+        cameraPhotoPath = null
     }
 
     LazyColumn(
@@ -296,14 +321,25 @@ private fun ItemDetail(
                             .clip(RoundedCornerShape(12.dp))
                     )
                 }
-                OutlinedButton(
-                    onClick = {
-                        pickPhoto.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            pickPhoto.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        }
+                    ) {
+                        Text("Pick photo")
                     }
-                ) {
-                    Text(if (item.photoPath == null) "Add photo" else "Change photo")
+                    OutlinedButton(
+                        onClick = {
+                            val file = photoStore.newPhotoFile()
+                            cameraPhotoPath = file.absolutePath
+                            takePhoto.launch(photoStore.contentUri(file))
+                        }
+                    ) {
+                        Text("Take photo")
+                    }
                 }
             }
         }
@@ -486,7 +522,8 @@ private fun WardrobeContentPreview() {
             onDismissAdd = {},
             onSaveItem = { _, _, _, _ -> },
             onStatusChange = { _, _ -> },
-            onGalleryPhoto = { _, _ -> }
+            onGalleryPhoto = { _, _ -> },
+            onCameraPhoto = { _, _ -> }
         )
     }
 }

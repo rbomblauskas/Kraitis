@@ -65,6 +65,15 @@ class WardrobeViewModel(
         }
     }
 
+    // camera already wrote the file, just remember the path
+    fun setPhotoFromCamera(itemId: Long, path: String) {
+        viewModelScope.launch {
+            val oldPath = items.value.firstOrNull { it.id == itemId }?.photoPath
+            clothingDao.updatePhoto(itemId, path)
+            photoStore.delete(oldPath)
+        }
+    }
+
     private fun parsePriceCents(priceText: String): Long? {
         val normalizedPrice = priceText.trim().replace(',', '.')
         if (normalizedPrice.isBlank()) return null
