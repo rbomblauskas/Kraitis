@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,6 +62,8 @@ import io.github.rbomblauskas.kraitis.data.ClothingStatus
 import io.github.rbomblauskas.kraitis.data.PhotoStore
 import io.github.rbomblauskas.kraitis.data.Season
 import io.github.rbomblauskas.kraitis.data.WearEvent
+import io.github.rbomblauskas.kraitis.domain.costPerWearCents
+import io.github.rbomblauskas.kraitis.domain.decideNextAction
 import io.github.rbomblauskas.kraitis.ui.theme.KraitisTheme
 import java.io.File
 import java.text.SimpleDateFormat
@@ -286,6 +289,11 @@ private fun ItemDetail(
         }
     }
 
+    val wearCount = wearEvents.size
+    val lastWornAt = wearEvents.maxOfOrNull { it.wornAt }
+    val decision = decideNextAction(item, wearCount, lastWornAt)
+    val costPerWear = costPerWearCents(item.priceCents, wearCount)
+
     val context = LocalContext.current
     val photoStore = remember { PhotoStore(context.applicationContext) }
     // path is remembered here because the camera result only says true/false
@@ -370,8 +378,9 @@ private fun ItemDetail(
                     DetailRow("Season", item.season.label)
                     DetailRow("Sentimental", if (item.sentimental) "yes" else "no")
                     DetailRow("Price", item.priceCents?.let { formatPrice(it) } ?: "-")
-                    DetailRow("Worn", "${wearEvents.size}x")
-                    DetailRow("Last worn", wearEvents.maxOfOrNull { it.wornAt }?.let { formatDate(it) } ?: "never")
+                    DetailRow("Worn", "${wearCount}x")
+                    DetailRow("Last worn", lastWornAt?.let { formatDate(it) } ?: "never")
+                    DetailRow("Cost per wear", costPerWear?.let { formatPrice(it) } ?: "-")
                 }
             }
         }
@@ -379,6 +388,28 @@ private fun ItemDetail(
         item {
             Button(onClick = { onLogWear(item.id) }) {
                 Text("Log wear today")
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "Next step: ${decision.action.label}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    decision.reasons.forEach { reason ->
+                        Text("- $reason", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
             }
         }
 
