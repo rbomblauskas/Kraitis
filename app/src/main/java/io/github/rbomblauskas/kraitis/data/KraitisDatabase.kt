@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [ClothingItem::class, WearEvent::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(KraitisTypeConverters::class)
@@ -40,13 +40,21 @@ abstract class KraitisDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE clothing_items ADD COLUMN season TEXT NOT NULL DEFAULT 'ALL_YEAR'")
+                db.execSQL("ALTER TABLE clothing_items ADD COLUMN sentimental INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE clothing_items ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): KraitisDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     KraitisDatabase::class.java,
                     "kraitis.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build().also { instance = it }
             }
         }

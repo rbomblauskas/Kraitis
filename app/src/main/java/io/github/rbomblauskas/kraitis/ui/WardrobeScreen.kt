@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -58,6 +59,7 @@ import io.github.rbomblauskas.kraitis.data.ClothingCondition
 import io.github.rbomblauskas.kraitis.data.ClothingItem
 import io.github.rbomblauskas.kraitis.data.ClothingStatus
 import io.github.rbomblauskas.kraitis.data.PhotoStore
+import io.github.rbomblauskas.kraitis.data.Season
 import io.github.rbomblauskas.kraitis.data.WearEvent
 import io.github.rbomblauskas.kraitis.ui.theme.KraitisTheme
 import java.io.File
@@ -82,8 +84,8 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
         onBackToList = { selectedItemId = null },
         onAddClick = { showAddDialog = true },
         onDismissAdd = { showAddDialog = false },
-        onSaveItem = { name, category, condition, price ->
-            viewModel.addItem(name, category, condition, price)
+        onSaveItem = { form ->
+            viewModel.addItem(form)
             showAddDialog = false
         },
         onStatusChange = viewModel::updateStatus,
@@ -104,7 +106,7 @@ private fun WardrobeContent(
     onBackToList: () -> Unit,
     onAddClick: () -> Unit,
     onDismissAdd: () -> Unit,
-    onSaveItem: (String, ClothingCategory, ClothingCondition, String) -> Unit,
+    onSaveItem: (AddItemForm) -> Unit,
     onStatusChange: (Long, ClothingStatus) -> Unit,
     onGalleryPhoto: (Long, Uri) -> Unit,
     onCameraPhoto: (Long, String) -> Unit,
@@ -365,6 +367,8 @@ private fun ItemDetail(
                 ) {
                     DetailRow("Category", item.category.label)
                     DetailRow("Condition", item.condition.label)
+                    DetailRow("Season", item.season.label)
+                    DetailRow("Sentimental", if (item.sentimental) "yes" else "no")
                     DetailRow("Price", item.priceCents?.let { formatPrice(it) } ?: "-")
                     DetailRow("Worn", "${wearEvents.size}x")
                     DetailRow("Last worn", wearEvents.maxOfOrNull { it.wornAt }?.let { formatDate(it) } ?: "never")
@@ -415,12 +419,14 @@ private fun DetailRow(label: String, value: String) {
 @Composable
 private fun AddItemDialog(
     onDismiss: () -> Unit,
-    onSave: (String, ClothingCategory, ClothingCondition, String) -> Unit
+    onSave: (AddItemForm) -> Unit
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var category by rememberSaveable { mutableStateOf(ClothingCategory.TOP) }
     var condition by rememberSaveable { mutableStateOf(ClothingCondition.GOOD) }
     var price by rememberSaveable { mutableStateOf("") }
+    var season by rememberSaveable { mutableStateOf(Season.ALL_YEAR) }
+    var sentimental by rememberSaveable { mutableStateOf(false) }
     val canSave = name.isNotBlank()
 
     AlertDialog(
@@ -448,6 +454,13 @@ private fun AddItemDialog(
                     optionLabel = { it.label },
                     onSelect = { condition = it }
                 )
+                DropdownField(
+                    label = "Season",
+                    selected = season,
+                    options = Season.entries,
+                    optionLabel = { it.label },
+                    onSelect = { season = it }
+                )
                 OutlinedTextField(
                     value = price,
                     onValueChange = { price = it },
@@ -455,11 +468,23 @@ private fun AddItemDialog(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
+                Row(
+                    modifier = Modifier.clickable { sentimental = !sentimental },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = sentimental,
+                        onCheckedChange = { sentimental = it }
+                    )
+                    Text("Sentimental value")
+                }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(name, category, condition, price) },
+                onClick = {
+                    onSave(AddItemForm(name, category, condition, price, season, sentimental))
+                },
                 enabled = canSave
             ) {
                 Text("Save")
@@ -545,7 +570,7 @@ private fun WardrobeContentPreview() {
             onBackToList = {},
             onAddClick = {},
             onDismissAdd = {},
-            onSaveItem = { _, _, _, _ -> },
+            onSaveItem = {},
             onStatusChange = { _, _ -> },
             onGalleryPhoto = { _, _ -> },
             onCameraPhoto = { _, _ -> },

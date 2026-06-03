@@ -12,5 +12,8 @@ data class ClothingItem(
     val condition: ClothingCondition,
     val priceCents: Long? = null,
     val status: ClothingStatus = ClothingStatus.ACTIVE,
-    val photoPath: String? = null
+    val photoPath: String? = null,
+    val season: Season = Season.ALL_YEAR,
+    val sentimental: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
 )

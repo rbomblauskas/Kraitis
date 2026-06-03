@@ -23,4 +23,11 @@ class KraitisTypeConverters {
     @TypeConverter
     fun stringToCondition(value: String): ClothingCondition =
         ClothingCondition.entries.firstOrNull { it.name == value } ?: ClothingCondition.GOOD
+
+    @TypeConverter
+    fun seasonToString(season: Season): String = season.name
+
+    @TypeConverter
+    fun stringToSeason(value: String): Season =
+        Season.entries.firstOrNull { it.name == value } ?: Season.ALL_YEAR
 }

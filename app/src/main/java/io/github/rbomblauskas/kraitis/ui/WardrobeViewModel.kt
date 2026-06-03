@@ -10,6 +10,7 @@ import io.github.rbomblauskas.kraitis.data.ClothingDao
 import io.github.rbomblauskas.kraitis.data.ClothingItem
 import io.github.rbomblauskas.kraitis.data.ClothingStatus
 import io.github.rbomblauskas.kraitis.data.PhotoStore
+import io.github.rbomblauskas.kraitis.data.Season
 import io.github.rbomblauskas.kraitis.data.WearEvent
 import io.github.rbomblauskas.kraitis.data.WearEventDao
 import java.math.RoundingMode
@@ -17,6 +18,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+data class AddItemForm(
+    val name: String,
+    val category: ClothingCategory,
+    val condition: ClothingCondition,
+    val priceText: String,
+    val season: Season,
+    val sentimental: Boolean
+)
 
 class WardrobeViewModel(
     private val clothingDao: ClothingDao,
@@ -43,13 +53,8 @@ class WardrobeViewModel(
         }
     }
 
-    fun addItem(
-        name: String,
-        category: ClothingCategory,
-        condition: ClothingCondition,
-        priceText: String
-    ) {
-        val trimmedName = name.trim()
+    fun addItem(form: AddItemForm) {
+        val trimmedName = form.name.trim()
         if (trimmedName.isBlank()) {
             return
         }
@@ -58,9 +63,11 @@ class WardrobeViewModel(
             clothingDao.insert(
                 ClothingItem(
                     name = trimmedName,
-                    category = category,
-                    condition = condition,
-                    priceCents = parsePriceCents(priceText)
+                    category = form.category,
+                    condition = form.condition,
+                    priceCents = parsePriceCents(form.priceText),
+                    season = form.season,
+                    sentimental = form.sentimental
                 )
             )
         }
