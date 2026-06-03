@@ -58,18 +58,24 @@ import io.github.rbomblauskas.kraitis.data.ClothingCondition
 import io.github.rbomblauskas.kraitis.data.ClothingItem
 import io.github.rbomblauskas.kraitis.data.ClothingStatus
 import io.github.rbomblauskas.kraitis.data.PhotoStore
+import io.github.rbomblauskas.kraitis.data.WearEvent
 import io.github.rbomblauskas.kraitis.ui.theme.KraitisTheme
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WardrobeApp(viewModel: WardrobeViewModel) {
     val items by viewModel.items.collectAsState()
+    val wearEvents by viewModel.wearEvents.collectAsState()
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
     var selectedItemId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     WardrobeContent(
         items = items,
+        wearEvents = wearEvents,
         selectedItemId = selectedItemId,
         showAddDialog = showAddDialog,
         onItemClick = { selectedItemId = it },
@@ -82,7 +88,8 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
         },
         onStatusChange = viewModel::updateStatus,
         onGalleryPhoto = viewModel::setPhotoFromGallery,
-        onCameraPhoto = viewModel::setPhotoFromCamera
+        onCameraPhoto = viewModel::setPhotoFromCamera,
+        onLogWear = viewModel::logWear
     )
 }
 
@@ -90,6 +97,7 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
 @Composable
 private fun WardrobeContent(
     items: List<ClothingItem>,
+    wearEvents: List<WearEvent>,
     selectedItemId: Long?,
     showAddDialog: Boolean,
     onItemClick: (Long) -> Unit,
@@ -99,7 +107,8 @@ private fun WardrobeContent(
     onSaveItem: (String, ClothingCategory, ClothingCondition, String) -> Unit,
     onStatusChange: (Long, ClothingStatus) -> Unit,
     onGalleryPhoto: (Long, Uri) -> Unit,
-    onCameraPhoto: (Long, String) -> Unit
+    onCameraPhoto: (Long, String) -> Unit,
+    onLogWear: (Long) -> Unit
 ) {
     val selectedItem = items.firstOrNull { it.id == selectedItemId }
 
@@ -138,10 +147,12 @@ private fun WardrobeContent(
         } else {
             ItemDetail(
                 item = selectedItem,
+                wearEvents = wearEvents.filter { it.itemId == selectedItemId },
                 onBack = onBackToList,
                 onStatusChange = onStatusChange,
                 onGalleryPhoto = onGalleryPhoto,
                 onCameraPhoto = onCameraPhoto,
+                onLogWear = onLogWear,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -239,10 +250,12 @@ private fun ClothingRow(
 @Composable
 private fun ItemDetail(
     item: ClothingItem?,
+    wearEvents: List<WearEvent>,
     onBack: () -> Unit,
     onStatusChange: (Long, ClothingStatus) -> Unit,
     onGalleryPhoto: (Long, Uri) -> Unit,
     onCameraPhoto: (Long, String) -> Unit,
+    onLogWear: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (item == null) {
@@ -353,7 +366,15 @@ private fun ItemDetail(
                     DetailRow("Category", item.category.label)
                     DetailRow("Condition", item.condition.label)
                     DetailRow("Price", item.priceCents?.let { formatPrice(it) } ?: "-")
+                    DetailRow("Worn", "${wearEvents.size}x")
+                    DetailRow("Last worn", wearEvents.maxOfOrNull { it.wornAt }?.let { formatDate(it) } ?: "never")
                 }
+            }
+        }
+
+        item {
+            Button(onClick = { onLogWear(item.id) }) {
+                Text("Log wear today")
             }
         }
 
@@ -499,6 +520,9 @@ private fun formatPrice(priceCents: Long): String {
     return "$whole.$cents"
 }
 
+private fun formatDate(timeMillis: Long): String =
+    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(timeMillis))
+
 @Preview(showBackground = true)
 @Composable
 private fun WardrobeContentPreview() {
@@ -514,6 +538,7 @@ private fun WardrobeContentPreview() {
                     status = ClothingStatus.ACTIVE
                 )
             ),
+            wearEvents = emptyList(),
             selectedItemId = null,
             showAddDialog = false,
             onItemClick = {},
@@ -523,7 +548,8 @@ private fun WardrobeContentPreview() {
             onSaveItem = { _, _, _, _ -> },
             onStatusChange = { _, _ -> },
             onGalleryPhoto = { _, _ -> },
-            onCameraPhoto = { _, _ -> }
+            onCameraPhoto = { _, _ -> },
+            onLogWear = {}
         )
     }
 }

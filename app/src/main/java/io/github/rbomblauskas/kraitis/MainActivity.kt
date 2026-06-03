@@ -17,9 +17,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val clothingDao = KraitisDatabase.getDatabase(applicationContext).clothingDao()
+        val database = KraitisDatabase.getDatabase(applicationContext)
         val photoStore = PhotoStore(applicationContext)
-        val viewModelFactory = WardrobeViewModelFactory(clothingDao, photoStore)
+        val viewModelFactory = WardrobeViewModelFactory(
+            database.clothingDao(),
+            database.wearEventDao(),
+            photoStore
+        )
 
         setContent {
             KraitisTheme {

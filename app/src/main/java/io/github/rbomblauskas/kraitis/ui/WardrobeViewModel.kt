@@ -10,6 +10,8 @@ import io.github.rbomblauskas.kraitis.data.ClothingDao
 import io.github.rbomblauskas.kraitis.data.ClothingItem
 import io.github.rbomblauskas.kraitis.data.ClothingStatus
 import io.github.rbomblauskas.kraitis.data.PhotoStore
+import io.github.rbomblauskas.kraitis.data.WearEvent
+import io.github.rbomblauskas.kraitis.data.WearEventDao
 import java.math.RoundingMode
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +20,7 @@ import kotlinx.coroutines.launch
 
 class WardrobeViewModel(
     private val clothingDao: ClothingDao,
+    private val wearEventDao: WearEventDao,
     private val photoStore: PhotoStore
 ) : ViewModel() {
     val items: StateFlow<List<ClothingItem>> = clothingDao.getAllItems()
@@ -26,6 +29,19 @@ class WardrobeViewModel(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    val wearEvents: StateFlow<List<WearEvent>> = wearEventDao.getAllEvents()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    fun logWear(itemId: Long) {
+        viewModelScope.launch {
+            wearEventDao.insert(WearEvent(itemId = itemId, wornAt = System.currentTimeMillis()))
+        }
+    }
 
     fun addItem(
         name: String,
@@ -88,12 +104,13 @@ class WardrobeViewModel(
 
 class WardrobeViewModelFactory(
     private val clothingDao: ClothingDao,
+    private val wearEventDao: WearEventDao,
     private val photoStore: PhotoStore
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(WardrobeViewModel::class.java)) {
-            return WardrobeViewModel(clothingDao, photoStore) as T
+            return WardrobeViewModel(clothingDao, wearEventDao, photoStore) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
