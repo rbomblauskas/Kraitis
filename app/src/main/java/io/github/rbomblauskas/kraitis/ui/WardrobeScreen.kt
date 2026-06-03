@@ -226,28 +226,31 @@ private fun ClothingRow(
             .fillMaxWidth()
             .clickable(onClick = onClick)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            ItemPhoto(item = item, size = 72.dp)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = item.status.label,
-                    style = MaterialTheme.typography.labelMedium
+                    text = "${item.category.label} - ${item.condition.label}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Text("${item.category.label} - ${item.condition.label}")
-            item.priceCents?.let { priceCents ->
-                Text("Price: ${formatPrice(priceCents)}")
-            }
+            Text(
+                text = item.status.label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
