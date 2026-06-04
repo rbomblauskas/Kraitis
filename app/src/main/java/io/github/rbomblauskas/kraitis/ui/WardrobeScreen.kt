@@ -1,6 +1,7 @@
 package io.github.rbomblauskas.kraitis.ui
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -139,6 +140,15 @@ private fun WardrobeContent(
 ) {
     val selectedItem = items.firstOrNull { it.id == selectedItemId }
     val detailOpen = tab == KraitisTab.WARDROBE && selectedItemId != null
+
+    // system back closes detail first, then returns to the wardrobe tab
+    BackHandler(enabled = detailOpen || tab != KraitisTab.WARDROBE) {
+        if (detailOpen) {
+            onBackToList()
+        } else {
+            onTabChange(KraitisTab.WARDROBE)
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
