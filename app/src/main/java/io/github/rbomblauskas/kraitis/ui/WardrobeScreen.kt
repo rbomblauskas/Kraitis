@@ -210,12 +210,12 @@ private fun WardrobeContent(
                 )
             }
 
-            KraitisTab.LOG_WEAR -> Box(modifier = contentModifier) {
-                Text(
-                    text = "Coming soon",
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            KraitisTab.LOG_WEAR -> LogWearScreen(
+                items = items,
+                wearEvents = wearEvents,
+                onLogWear = onLogWear,
+                modifier = contentModifier
+            )
 
             KraitisTab.TIPS -> Box(modifier = contentModifier) {
                 Text(
@@ -654,7 +654,7 @@ private fun formatPrice(priceCents: Long): String {
     return "$whole.$cents"
 }
 
-private fun formatDate(timeMillis: Long): String =
+internal fun formatDate(timeMillis: Long): String =
     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(timeMillis))
 
 @Preview(showBackground = true)
