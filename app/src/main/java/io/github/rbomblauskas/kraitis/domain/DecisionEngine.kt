@@ -10,8 +10,9 @@ private const val DAY_MS = 24L * 60 * 60 * 1000
 
 // thresholds picked by feel, easy to tune later
 private const val RECENT_WEAR_DAYS = 30
-private const val REWEAR_AFTER_DAYS = 90
-private const val LET_GO_AFTER_DAYS = 180
+private const val NEVER_WORN_NUDGE_DAYS = 30
+private const val REWEAR_AFTER_DAYS = 60
+private const val LET_GO_AFTER_DAYS = 150
 private const val REPAIR_WORTH_CENTS = 3000L
 
 data class Decision(
