@@ -19,6 +19,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -30,8 +34,11 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -70,6 +77,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+enum class KraitisTab(val label: String) {
+    WARDROBE("Wardrobe"),
+    LOG_WEAR("Log wear"),
+    TIPS("Tips")
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WardrobeApp(viewModel: WardrobeViewModel) {
@@ -77,13 +90,20 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
     val wearEvents by viewModel.wearEvents.collectAsState()
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
     var selectedItemId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var tab by rememberSaveable { mutableStateOf(KraitisTab.WARDROBE) }
 
     WardrobeContent(
         items = items,
         wearEvents = wearEvents,
         selectedItemId = selectedItemId,
         showAddDialog = showAddDialog,
-        onItemClick = { selectedItemId = it },
+        tab = tab,
+        onTabChange = { tab = it },
+        // also jumps back to the wardrobe tab when an item is opened from tips
+        onItemClick = {
+            selectedItemId = it
+            tab = KraitisTab.WARDROBE
+        },
         onBackToList = { selectedItemId = null },
         onAddClick = { showAddDialog = true },
         onDismissAdd = { showAddDialog = false },
@@ -105,6 +125,8 @@ private fun WardrobeContent(
     wearEvents: List<WearEvent>,
     selectedItemId: Long?,
     showAddDialog: Boolean,
+    tab: KraitisTab,
+    onTabChange: (KraitisTab) -> Unit,
     onItemClick: (Long) -> Unit,
     onBackToList: () -> Unit,
     onAddClick: () -> Unit,
@@ -116,13 +138,12 @@ private fun WardrobeContent(
     onLogWear: (Long) -> Unit
 ) {
     val selectedItem = items.firstOrNull { it.id == selectedItemId }
+    val detailOpen = tab == KraitisTab.WARDROBE && selectedItemId != null
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            if (selectedItemId == null) {
-                TopAppBar(title = { Text("Kraitis") })
-            } else {
+            if (detailOpen) {
                 TopAppBar(
                     title = { Text("Item detail") },
                     navigationIcon = {
@@ -131,37 +152,77 @@ private fun WardrobeContent(
                         }
                     }
                 )
+            } else {
+                val title = when (tab) {
+                    KraitisTab.WARDROBE -> "Kraitis"
+                    KraitisTab.LOG_WEAR -> "Log wear"
+                    KraitisTab.TIPS -> "Recommendations"
+                }
+                TopAppBar(title = { Text(title) })
+            }
+        },
+        bottomBar = {
+            NavigationBar {
+                KraitisTab.entries.forEach { entry ->
+                    val icon = when (entry) {
+                        KraitisTab.WARDROBE -> Icons.Filled.Home
+                        KraitisTab.LOG_WEAR -> Icons.Filled.Check
+                        KraitisTab.TIPS -> Icons.Filled.Star
+                    }
+                    NavigationBarItem(
+                        selected = tab == entry,
+                        onClick = { onTabChange(entry) },
+                        icon = { Icon(icon, contentDescription = entry.label) },
+                        label = { Text(entry.label) }
+                    )
+                }
             }
         },
         floatingActionButton = {
-            if (selectedItemId == null) {
+            if (tab == KraitisTab.WARDROBE && selectedItemId == null) {
                 FloatingActionButton(onClick = onAddClick) {
                     Text("+")
                 }
             }
         }
     ) { innerPadding ->
-        if (selectedItemId == null) {
-            WardrobeList(
-                items = items,
-                onItemClick = onItemClick,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            )
-        } else {
-            ItemDetail(
-                item = selectedItem,
-                wearEvents = wearEvents.filter { it.itemId == selectedItemId },
-                onBack = onBackToList,
-                onStatusChange = onStatusChange,
-                onGalleryPhoto = onGalleryPhoto,
-                onCameraPhoto = onCameraPhoto,
-                onLogWear = onLogWear,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            )
+        val contentModifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+
+        when (tab) {
+            KraitisTab.WARDROBE -> if (selectedItemId == null) {
+                WardrobeList(
+                    items = items,
+                    onItemClick = onItemClick,
+                    modifier = contentModifier
+                )
+            } else {
+                ItemDetail(
+                    item = selectedItem,
+                    wearEvents = wearEvents.filter { it.itemId == selectedItemId },
+                    onBack = onBackToList,
+                    onStatusChange = onStatusChange,
+                    onGalleryPhoto = onGalleryPhoto,
+                    onCameraPhoto = onCameraPhoto,
+                    onLogWear = onLogWear,
+                    modifier = contentModifier
+                )
+            }
+
+            KraitisTab.LOG_WEAR -> Box(modifier = contentModifier) {
+                Text(
+                    text = "Coming soon",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            KraitisTab.TIPS -> Box(modifier = contentModifier) {
+                Text(
+                    text = "Coming soon",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
     }
 
@@ -614,6 +675,8 @@ private fun WardrobeContentPreview() {
             wearEvents = emptyList(),
             selectedItemId = null,
             showAddDialog = false,
+            tab = KraitisTab.WARDROBE,
+            onTabChange = {},
             onItemClick = {},
             onBackToList = {},
             onAddClick = {},
