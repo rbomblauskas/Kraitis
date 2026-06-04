@@ -217,12 +217,12 @@ private fun WardrobeContent(
                 modifier = contentModifier
             )
 
-            KraitisTab.TIPS -> Box(modifier = contentModifier) {
-                Text(
-                    text = "Coming soon",
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            KraitisTab.TIPS -> RecommendationsScreen(
+                items = items,
+                wearEvents = wearEvents,
+                onItemClick = onItemClick,
+                modifier = contentModifier
+            )
         }
     }
 
