@@ -347,13 +347,19 @@ private fun ItemDetail(
                             .clip(RoundedCornerShape(12.dp))
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     OutlinedButton(
                         onClick = {
                             pickPhoto.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
-                        }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
                     ) {
                         Text("Pick photo")
                     }
@@ -362,7 +368,10 @@ private fun ItemDetail(
                             val file = photoStore.newPhotoFile()
                             cameraPhotoPath = file.absolutePath
                             takePhoto.launch(photoStore.contentUri(file))
-                        }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
                     ) {
                         Text("Take photo")
                     }
@@ -389,8 +398,13 @@ private fun ItemDetail(
         }
 
         item {
-            Button(onClick = { onLogWear(item.id) }) {
-                Text("Log wear today")
+            Button(
+                onClick = { onLogWear(item.id) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                Text("Log wear today", style = MaterialTheme.typography.titleMedium)
             }
         }
 
