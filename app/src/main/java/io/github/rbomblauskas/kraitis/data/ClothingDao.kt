@@ -17,6 +17,12 @@ interface ClothingDao {
     @Insert
     suspend fun insert(item: ClothingItem): Long
 
+    @Insert
+    suspend fun insertAll(items: List<ClothingItem>)
+
+    @Query("DELETE FROM clothing_items")
+    suspend fun deleteAll()
+
     @Update
     suspend fun update(item: ClothingItem)
 

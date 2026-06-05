@@ -12,4 +12,10 @@ interface WearEventDao {
 
     @Insert
     suspend fun insert(event: WearEvent): Long
+
+    @Insert
+    suspend fun insertAll(events: List<WearEvent>)
+
+    @Query("DELETE FROM wear_events")
+    suspend fun deleteAll()
 }

@@ -120,6 +120,29 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
         }
     }
 
+    val importBackup = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            val json = try {
+                context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            } catch (e: Exception) {
+                null
+            }
+            if (json == null) {
+                Toast.makeText(context, "Could not read file", Toast.LENGTH_SHORT).show()
+            } else {
+                viewModel.importBackup(json) { ok ->
+                    Toast.makeText(
+                        context,
+                        if (ok) "Backup imported" else "Import failed, file looks broken",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
     WardrobeContent(
         items = items,
         wearEvents = wearEvents,
@@ -128,6 +151,7 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
         tab = tab,
         onTabChange = { tab = it },
         onExportClick = { exportBackup.launch("kraitis-backup.json") },
+        onImportClick = { importBackup.launch(arrayOf("application/json")) },
         // also jumps back to the wardrobe tab when an item is opened from tips
         onItemClick = {
             selectedItemId = it
@@ -157,6 +181,7 @@ private fun WardrobeContent(
     tab: KraitisTab,
     onTabChange: (KraitisTab) -> Unit,
     onExportClick: () -> Unit,
+    onImportClick: () -> Unit,
     onItemClick: (Long) -> Unit,
     onBackToList: () -> Unit,
     onAddClick: () -> Unit,
@@ -203,6 +228,9 @@ private fun WardrobeContent(
                         if (tab == KraitisTab.WARDROBE) {
                             TextButton(onClick = onExportClick) {
                                 Text("Export")
+                            }
+                            TextButton(onClick = onImportClick) {
+                                Text("Import")
                             }
                         }
                     }
@@ -727,6 +755,7 @@ private fun WardrobeContentPreview() {
             tab = KraitisTab.WARDROBE,
             onTabChange = {},
             onExportClick = {},
+            onImportClick = {},
             onItemClick = {},
             onBackToList = {},
             onAddClick = {},

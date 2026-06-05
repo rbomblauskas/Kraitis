@@ -13,6 +13,7 @@ import io.github.rbomblauskas.kraitis.data.PhotoStore
 import io.github.rbomblauskas.kraitis.data.Season
 import io.github.rbomblauskas.kraitis.data.WearEvent
 import io.github.rbomblauskas.kraitis.data.WearEventDao
+import io.github.rbomblauskas.kraitis.data.parseBackup
 import java.math.RoundingMode
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -94,6 +95,22 @@ class WardrobeViewModel(
             val oldPath = items.value.firstOrNull { it.id == itemId }?.photoPath
             clothingDao.updatePhoto(itemId, path)
             photoStore.delete(oldPath)
+        }
+    }
+
+    // replaces everything, parse happens first so bad json keeps current data
+    fun importBackup(json: String, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val (importedItems, importedEvents) = parseBackup(json)
+                wearEventDao.deleteAll()
+                clothingDao.deleteAll()
+                clothingDao.insertAll(importedItems)
+                wearEventDao.insertAll(importedEvents)
+                onDone(true)
+            } catch (e: Exception) {
+                onDone(false)
+            }
         }
     }
 
