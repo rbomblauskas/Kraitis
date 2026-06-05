@@ -108,6 +108,14 @@ fun decideNextAction(
         )
     }
 
+    // nudge never worn items earlier, otherwise they sit quiet for months
+    if (lastWornAt == null && daysUnused >= NEVER_WORN_NUDGE_DAYS) {
+        return Decision(
+            ClothingStatus.REWEAR,
+            listOf(unusedText, "wear it once to see if it earns its place")
+        )
+    }
+
     if (daysUnused >= REWEAR_AFTER_DAYS) {
         return Decision(
             ClothingStatus.REWEAR,
