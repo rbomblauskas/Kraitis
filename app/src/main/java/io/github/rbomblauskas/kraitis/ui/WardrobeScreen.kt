@@ -232,6 +232,7 @@ private fun WardrobeContent(
                 items = items,
                 wearEvents = wearEvents,
                 onItemClick = onItemClick,
+                onStatusChange = onStatusChange,
                 modifier = contentModifier
             )
         }
