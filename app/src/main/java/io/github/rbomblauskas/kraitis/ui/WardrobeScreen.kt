@@ -1,6 +1,7 @@
 package io.github.rbomblauskas.kraitis.ui
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -74,6 +75,7 @@ import io.github.rbomblauskas.kraitis.data.ClothingStatus
 import io.github.rbomblauskas.kraitis.data.PhotoStore
 import io.github.rbomblauskas.kraitis.data.Season
 import io.github.rbomblauskas.kraitis.data.WearEvent
+import io.github.rbomblauskas.kraitis.data.exportJson
 import io.github.rbomblauskas.kraitis.domain.costPerWearCents
 import io.github.rbomblauskas.kraitis.domain.decideNextAction
 import io.github.rbomblauskas.kraitis.ui.theme.KraitisTheme
@@ -97,6 +99,27 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
     var selectedItemId by rememberSaveable { mutableStateOf<Long?>(null) }
     var tab by rememberSaveable { mutableStateOf(KraitisTab.WARDROBE) }
 
+    val context = LocalContext.current
+    val exportBackup = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            val ok = try {
+                context.contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(exportJson(items, wearEvents).toByteArray())
+                    true
+                } ?: false
+            } catch (e: Exception) {
+                false
+            }
+            Toast.makeText(
+                context,
+                if (ok) "Backup saved" else "Export failed",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     WardrobeContent(
         items = items,
         wearEvents = wearEvents,
@@ -104,6 +127,7 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
         showAddDialog = showAddDialog,
         tab = tab,
         onTabChange = { tab = it },
+        onExportClick = { exportBackup.launch("kraitis-backup.json") },
         // also jumps back to the wardrobe tab when an item is opened from tips
         onItemClick = {
             selectedItemId = it
@@ -132,6 +156,7 @@ private fun WardrobeContent(
     showAddDialog: Boolean,
     tab: KraitisTab,
     onTabChange: (KraitisTab) -> Unit,
+    onExportClick: () -> Unit,
     onItemClick: (Long) -> Unit,
     onBackToList: () -> Unit,
     onAddClick: () -> Unit,
@@ -172,7 +197,16 @@ private fun WardrobeContent(
                     KraitisTab.LOG_WEAR -> "Log wear"
                     KraitisTab.TIPS -> "Recommendations"
                 }
-                TopAppBar(title = { Text(title) })
+                TopAppBar(
+                    title = { Text(title) },
+                    actions = {
+                        if (tab == KraitisTab.WARDROBE) {
+                            TextButton(onClick = onExportClick) {
+                                Text("Export")
+                            }
+                        }
+                    }
+                )
             }
         },
         bottomBar = {
@@ -692,6 +726,7 @@ private fun WardrobeContentPreview() {
             showAddDialog = false,
             tab = KraitisTab.WARDROBE,
             onTabChange = {},
+            onExportClick = {},
             onItemClick = {},
             onBackToList = {},
             onAddClick = {},
