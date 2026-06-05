@@ -22,6 +22,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
@@ -37,6 +39,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.NavigationBar
@@ -158,8 +161,8 @@ private fun WardrobeContent(
                 TopAppBar(
                     title = { Text("Item detail") },
                     navigationIcon = {
-                        TextButton(onClick = onBackToList) {
-                            Text("Back")
+                        IconButton(onClick = onBackToList) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
                 )
@@ -192,7 +195,7 @@ private fun WardrobeContent(
         floatingActionButton = {
             if (tab == KraitisTab.WARDROBE && selectedItemId == null) {
                 FloatingActionButton(onClick = onAddClick) {
-                    Text("+")
+                    Icon(Icons.Filled.Add, contentDescription = "Add item")
                 }
             }
         }
