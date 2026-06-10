@@ -5,9 +5,7 @@ Kraitis *(Lithuanian for trosseau, wardrobe)* is a local-first Android app for w
 ## Table of Contents
 - [How to build](#how-to-build)
 - [Features](#features)
-- [How recommendations work](#how-recommendations-work)
 - [Roadmap](#roadmap)
-- [Showcase and screenshots](#showcase-and-screenshots)
 - [Reflection](#reflection)
 
 ## How to build
@@ -61,6 +59,26 @@ The app stores everything locally with Room, so right now there is no backend li
 - Reminder notification:
 
   - A daily WorkManager reminder can show a short summary if some clothes are waiting for action
+
+## Roadmap
+
+(or things I may add/fix next, in no very serious order)
+
+- [ ] Better editing for existing clothing items
+
+- [ ] Delete items propelry from the UI
+
+- [ ] More careful import handling, especially around photo paths
+
+- [ ] A small repair notes field, maybe
+
+- [ ] Nicer empty states
+
+- [ ] Unit tests for the decision engine and backup parsing
+
+- [ ] Some UI tests
+
+- [ ] App icon polish, to switch over from the default icon
 
 ## Reflection
 This is a learning project, so the goal was not to make the biggest possible app. I wanted something small that actually works and has a clear point.
