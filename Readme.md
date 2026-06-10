@@ -66,7 +66,7 @@ The app stores everything locally with Room, so right now there is no backend li
 
 - [ ] Better editing for existing clothing items
 
-- [ ] Delete items propelry from the UI
+- [ ] Delete items properly from the UI
 
 - [ ] More careful import handling, especially around photo paths
 
