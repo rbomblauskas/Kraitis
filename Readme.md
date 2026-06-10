@@ -1,6 +1,6 @@
 # Kraitis
 
-Kraitis is a local-first Android app for wardrobe auditing, written in Kotlin and Jetpack Compose.
+Kraitis *(Lithuanian for trosseau, wardrobe)* is a local-first Android app for wardrobe auditing, written in Kotlin and Jetpack Compose.
 
 ## Table of Contents
 - [How to build](#how-to-build)
