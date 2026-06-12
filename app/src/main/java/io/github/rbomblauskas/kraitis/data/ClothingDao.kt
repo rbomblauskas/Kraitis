@@ -23,6 +23,9 @@ interface ClothingDao {
     @Query("DELETE FROM clothing_items")
     suspend fun deleteAll()
 
+    @Query("DELETE FROM clothing_items WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     @Update
     suspend fun update(item: ClothingItem)
 

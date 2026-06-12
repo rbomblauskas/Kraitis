@@ -18,4 +18,7 @@ interface WearEventDao {
 
     @Query("DELETE FROM wear_events")
     suspend fun deleteAll()
+
+    @Query("DELETE FROM wear_events WHERE itemId = :itemId")
+    suspend fun deleteForItem(itemId: Long)
 }

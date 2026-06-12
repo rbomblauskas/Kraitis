@@ -74,6 +74,15 @@ class WardrobeViewModel(
         }
     }
 
+    fun deleteItem(itemId: Long) {
+        viewModelScope.launch {
+            val photoPath = items.value.firstOrNull { it.id == itemId }?.photoPath
+            wearEventDao.deleteForItem(itemId)
+            clothingDao.deleteById(itemId)
+            photoStore.delete(photoPath)
+        }
+    }
+
     fun updateStatus(itemId: Long, status: ClothingStatus) {
         viewModelScope.launch {
             clothingDao.updateStatus(itemId, status)

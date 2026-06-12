@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -167,7 +168,11 @@ fun WardrobeApp(viewModel: WardrobeViewModel) {
         onStatusChange = viewModel::updateStatus,
         onGalleryPhoto = viewModel::setPhotoFromGallery,
         onCameraPhoto = viewModel::setPhotoFromCamera,
-        onLogWear = viewModel::logWear
+        onLogWear = viewModel::logWear,
+        onDeleteItem = { id ->
+            viewModel.deleteItem(id)
+            selectedItemId = null
+        }
     )
 }
 
@@ -190,7 +195,8 @@ private fun WardrobeContent(
     onStatusChange: (Long, ClothingStatus) -> Unit,
     onGalleryPhoto: (Long, Uri) -> Unit,
     onCameraPhoto: (Long, String) -> Unit,
-    onLogWear: (Long) -> Unit
+    onLogWear: (Long) -> Unit,
+    onDeleteItem: (Long) -> Unit
 ) {
     val selectedItem = items.firstOrNull { it.id == selectedItemId }
     val detailOpen = tab == KraitisTab.WARDROBE && selectedItemId != null
@@ -282,6 +288,7 @@ private fun WardrobeContent(
                     onGalleryPhoto = onGalleryPhoto,
                     onCameraPhoto = onCameraPhoto,
                     onLogWear = onLogWear,
+                    onDelete = onDeleteItem,
                     modifier = contentModifier
                 )
             }
@@ -402,6 +409,7 @@ private fun ItemDetail(
     onGalleryPhoto: (Long, Uri) -> Unit,
     onCameraPhoto: (Long, String) -> Unit,
     onLogWear: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (item == null) {
@@ -437,6 +445,7 @@ private fun ItemDetail(
 
     val context = LocalContext.current
     val photoStore = remember { PhotoStore(context.applicationContext) }
+    var showRemoveDialog by rememberSaveable { mutableStateOf(false) }
     // path is remembered here because the camera result only says true/false
     var cameraPhotoPath by rememberSaveable { mutableStateOf<String?>(null) }
     val takePhoto = rememberLauncherForActivityResult(
@@ -585,6 +594,43 @@ private fun ItemDetail(
                 }
             }
         }
+
+        item {
+            OutlinedButton(
+                onClick = { showRemoveDialog = true },
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text("Remove item")
+            }
+        }
+    }
+
+    if (showRemoveDialog) {
+        AlertDialog(
+            onDismissRequest = { showRemoveDialog = false },
+            title = { Text("Remove ${item.name}?") },
+            text = { Text("The item and its wear history will be deleted.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRemoveDialog = false
+                        onDelete(item.id)
+                    }
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -764,7 +810,8 @@ private fun WardrobeContentPreview() {
             onStatusChange = { _, _ -> },
             onGalleryPhoto = { _, _ -> },
             onCameraPhoto = { _, _ -> },
-            onLogWear = {}
+            onLogWear = {},
+            onDeleteItem = {}
         )
     }
 }
