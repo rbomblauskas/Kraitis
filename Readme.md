@@ -3,10 +3,17 @@
 Kraitis *(Lithuanian for trosseau, wardrobe)* is a local-first Android app for wardrobe auditing, written in Kotlin and Jetpack Compose.
 
 ## Table of Contents
+- [Screenshots](#screenshots)
 - [How to build](#how-to-build)
 - [Features](#features)
 - [Roadmap](#roadmap)
 - [Reflection](#reflection)
+
+## Screenshots
+
+| Wardrobe | Item detail | Item status | Recommendations |
+|---|---|---|---|
+| <img src="img/s1.jpg" width="200"> | <img src="img/s2.jpg" width="200"> | <img src="img/s3.jpg" width="200"> | <img src="img/s4.jpg" width="200"> |
 
 ## How to build
 - Open this folder in Android Studio
